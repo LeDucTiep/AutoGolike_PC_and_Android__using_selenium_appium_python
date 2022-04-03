@@ -11,9 +11,10 @@ import sys
 
 SO_JOB_MOI_NICK = 10
 DELAY_FOR_EACH_ELEMENT = 5
-# FILE_LUU_SO_THU_TU_JOB_LAM_DAU_TIEN = "D:\AutoGolike_PC_and_Android\so_account_da_lam_xong.txt"
-LINK_CHROMEDRIVER_99 = "D:\\ChromeDriver\\chromedriver.exe"
+TOI_DA_SO_LUONG_JOB_KHONG_LOAD_DUOC_THI_CO_KHA_NANG_LOI = 10
 LINK_CHROMEDRIVER_98 = r"D:\ChromeDriver\chrome_ver98\chromedriver.exe"
+LINK_CHROMEDRIVER_100 = r"D:\ChromeDriver\chrome_ver100\chromedriver.exe"
+
 ten_dang_nhap = "tieple247"
 mat_khau = "lananhvu2701"
 id_device = ('AMD00232309', 'X9C1932014491')
@@ -24,17 +25,42 @@ conn = pyodbc.connect('Driver={SQL Server};'
                       'Trusted_Connection=yes;')
 
 
-def lay_so_account_da_lam() -> int:
-    cursor = conn.cursor()
-    cursor.execute("SELECT soacc FROM SoAccountDaLam")
-    for i in cursor:
-        return i[0]
-
-
-def sua_so_account_da_lam(so_acc):
+def lay_id_account():
+    id = None
     with conn:
         cursor = conn.cursor()
-        cursor.execute("UPDATE SoAccountDaLam SET soacc = "+str(so_acc))
+        cursor.execute('''  
+                            SELECT top(1)
+                                id_fb
+                            FROM taikhoan
+                            WHERE dang_lam = (SELECT min(dang_lam)
+                                FROM taikhoan where day(getdate()) != day(ngay_lam_xong))
+                            and day(getdate()) != day(ngay_lam_xong)
+                        ''')
+        for i in cursor:
+            id = i[0]
+
+        if(id == None):
+            input(">>> BÁO ĐỘNG: HẾT NICK RỒI THÊM VÀO CHO TAO LÀM NHANH LÊN!!!!!!")
+            exit()
+
+        cursor = conn.cursor()
+        cursor.execute('''  
+                            UPDATE taikhoan 
+                            SET dang_lam += 1
+                            WHERE id_fb = ''' + id
+                       )
+    return id
+
+
+def set_id_account_du_100_jobs(id):
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+                            UPDATE taikhoan 
+                            SET ngay_lam_xong = GETDATE()
+                            where id_fb = '''+str(id)
+                       )
 
 
 def sleep13():
@@ -75,21 +101,12 @@ def nhan_ok(driver):
 
 class Client:
     driver = None
-    golike_tab = None
-    present_id = None
-    fb_id = ('100076681864851',
-             '100076630237844',
-             '100076621927821',
-             '100076609088552',
-             '100076560130796',
-             '100076487174292',
-             '100076469834611',
-             '100076469265711',
-             '100076379839853',
-             '100012962526153')
-    so_account_da_lam = None
+    id_account_is_doing_in_golike = None
+    id_will_give_to_server_facebook = None
     so_jobs_can_lam = SO_JOB_MOI_NICK
     so_lan_thu_hoan_thanh_lai = 0
+    # Nếu load 10 lần mà ko dc thì có j đó sai sai r
+    so_lan_load_ma_khong_co_job = 0
     SO_THU_TU_THIET_BI_CAN_CHAY = None
 
     def __init__(self, stt):
@@ -98,7 +115,7 @@ class Client:
             'platformName': 'Android',
             'platformVersion': '10',
             'browserName': 'chrome',
-            'appium:chromedriverExecutable': LINK_CHROMEDRIVER_99,
+            'appium:chromedriverExecutable': LINK_CHROMEDRIVER_100,
             'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
             'newCommandTimeout': '86400'
         }, {
@@ -109,10 +126,8 @@ class Client:
             'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
             'newCommandTimeout': '86400'
         }
-        self.so_account_da_lam = lay_so_account_da_lam()
-        self.tang_so_account_da_lam()
+        self.id_will_give_to_server_facebook = lay_id_account()
         self.driver = self.connect_mobile()
-        # test(self.driver)
         self.login(ten_dang_nhap, mat_khau)
 
     def connect_mobile(self) -> appium_webdriver:
@@ -122,11 +137,9 @@ class Client:
         driver.implicitly_wait(DELAY_FOR_EACH_ELEMENT)
         return driver
 
-    def tang_so_account_da_lam(self):
-        self.so_account_da_lam += 1
-        if(self.so_account_da_lam == len(self.fb_id)):
-            self.so_account_da_lam = 0
-        sua_so_account_da_lam(self.so_account_da_lam)
+    def scroll_down(self):
+        subprocess.call(
+            'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 200 900 200 300')
 
     def doi_ip(self):
         print("-------------------------------DANG DOI IP MANG---------------------------------------------------")
@@ -134,6 +147,7 @@ class Client:
             'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc wifi disable')
         subprocess.call(
             'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc data disable')
+        time.sleep(0.2)
         subprocess.call(
             'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc data enable')
         time.sleep(0.5)
@@ -146,45 +160,51 @@ class Client:
             # input("-->KHÓA ỨNG DỤNG LẠI, RỒI NHẤN ENTER!")
             print("The web is loaded!")
             # lưu lại tab này, ta sẽ cần nó để phân biệt tab nào không nên tắt
-            self.golike_tab = self.driver.window_handles[0]
             div = self.driver.find_elements(
                 By.CSS_SELECTOR, "input.form-control")
             div[0].send_keys(userName)
             div[1].send_keys(passWord)
             time.sleep(1.5)
             self.driver.find_element(By.TAG_NAME, "button").click()
-            time.sleep(1.5)
+            time.sleep(3)
+            if(self.captcha_co_dang_hien_thi_khong()):
+                self.login(userName, passWord)
+                return
             self.driver.find_element(
                 By.XPATH, "//*[@id=\"cheatModal\"]/div/div/div/div/div/button").click()
             print("Login successful!")
-            
         else:
-            print("Chrome in not open yet!")
+            input("Chrome in not open yet!")
 
     def doi_taikhoan_lamviec(self):
-        print(" ", self.present_id, "\n", self.fb_id[self.so_account_da_lam])
+        print("doing     : ", self.id_account_is_doing_in_golike)
+        print("account_id: ", self.id_will_give_to_server_facebook)
         # đổi đến tài khoản chưa làm xong
-        if((self.present_id != None) and (self.present_id == self.fb_id[self.so_account_da_lam])):
-            print("Vẫn đang làm account: ", self.present_id)
+        if((self.id_account_is_doing_in_golike != None) and (self.id_account_is_doing_in_golike == self.id_will_give_to_server_facebook)):
+            print("Vẫn đang làm account: ", self.id_account_is_doing_in_golike)
             return
-        if(self.present_id != None):
+        # lần đầu tiên đăng nhập thì ko đổi ip, những lần sau đó thì có
+        if(self.id_account_is_doing_in_golike != None):
             self.doi_ip()
         self.driver.execute_script(
-            r"{let all=document.getElementsByClassName('card shadow-200 mt-1');for(var i=0;i<all.length;++i){if(all[i].getAttribute('id')=='"+self.fb_id[self.so_account_da_lam]+"'){all[i].click();break;}}}")
+            r"{let all=document.getElementsByClassName('card shadow-200 mt-1');for(var i=0;i<all.length;++i){if(all[i].getAttribute('id')=='"+self.id_will_give_to_server_facebook+"'){all[i].click();break;}}}")
         print("==================================================DOI ACCOUNT=====================================================")
-        self.present_id = self.fb_id[self.so_account_da_lam]
-        print("--> Dang lam account: ", self.present_id)
+        self.id_account_is_doing_in_golike = self.id_will_give_to_server_facebook
+        print("--> Dang lam account: ", self.id_account_is_doing_in_golike)
 
     def kiem_tra_dung_tai_khoan(self):
+
         nick_dang_lam = self.driver.execute_script(
             "return document.getElementsByClassName('card shadow-200 mt-1 bg-b100')[0].id")
-        return nick_dang_lam == self.present_id
+        dk = int(nick_dang_lam) == int(self.id_account_is_doing_in_golike)
+        if (not dk):
+            print(nick_dang_lam, self.id_account_is_doing_in_golike)
+        return dk
 
-    def lay_jobs(self):
-        self.close_tab_2()
+    def lay_thong_tin_job(self):
         # Ta cần trắc trắn không có thông báo nào hiện lên
         self.xet_cap_cha()
-
+       
         if((not dang_o_load_job(self.driver)) and (not dang_o_chi_tiet_job(self.driver))):
             # Vào phần chọn kênh kiếm tiền: - lệnh này có lỗi khi đang ở Chi tiết và web tự chuyển hướng sang trang load job
             try:
@@ -203,93 +223,127 @@ class Client:
         else:
             print("--> ĐANG LOADING JOBS")
         # cần làm được: biết nick nào chưa làm xong của ngày hôm nay. -> chuyển đến nick chưa làm xong - solved
-        self.doi_taikhoan_lamviec()
-
+        try:
+            self.doi_taikhoan_lamviec()
+        except:
+            print("* Không đổi được tài khoản làm việc.")
         while(1):
             try:
-                # CÓ THỂ LỖI KHI CÓ THÔNG BÁO HIỂN THỊ
-                job = self.driver.find_elements(
-                    By.CSS_SELECTOR, 'div.card.mb-2.hand')
-                if(not self.kiem_tra_dung_tai_khoan()):
-                    input("----------------------------------lech tai khoan: ")
-                if((job != None)):
-                    # click có thể lỗi nếu có thông báo hiển thị
-                    job[0].click()
-                    print("-->ĐÃ TÌM THẤY JOB")
-                    break
+                if(dang_o_load_job(self.driver)):
+                    self.scroll_down()
+                    # CÓ THỂ LỖI KHI CÓ THÔNG BÁO HIỂN THỊ
+                    job = self.driver.find_elements(
+                        By.CSS_SELECTOR, 'div.card.mb-2.hand')
+                    if(not self.kiem_tra_dung_tai_khoan()):
+                        self.doi_taikhoan_lamviec()
+                    if((job != None)):
+                        # click có thể lỗi nếu có thông báo hiển thị
+                        job[0].click()
+                        print("-->ĐÃ TÌM THẤY JOB")
+
+                        break
+                elif(dang_o_chi_tiet_job(self.driver)):
+                    self.hoan_thanh()
+                else:
+                    return self.lay_thong_tin_job()
             except:
+                self.so_lan_load_ma_khong_co_job += 1
+                if(self.so_lan_load_ma_khong_co_job == TOI_DA_SO_LUONG_JOB_KHONG_LOAD_DUOC_THI_CO_KHA_NANG_LOI):
+                    self.so_lan_load_ma_khong_co_job = 0
+                    self.id_will_give_to_server_facebook = lay_id_account()
+                    try:
+                        print(">>> Đổi tài khoản làm việc do load hết hơi không dc job nào...")
+                        self.doi_taikhoan_lamviec()
+                    except:
+                        print("*Khong khoi duoc tai khoan id: ", self.id_will_give_to_server_facebook)
+                        self.driver.get('https://app.golike.net/')
+                    return self.lay_thong_tin_job()
+                print(">>> LỖI KHÔNG TÌM THẤY JOB!!!")
                 self.xet_cap_cha()
                 # scroll xuong vi mot so thiet bi man hinh nho khong nhin thay ben duoi
-                try:
-                    self.driver.execute_script(
-                        "document.getElementsByClassName('b200 mb-2 mt-2')[0].scrollIntoView()")
-                except:
-                    self.doi_ip()
-                    self.driver.get('https://app.golike.net/')
-                    return self.lay_jobs()
-                print(">>> LỖI KHÔNG TÌM THẤY JOB!!!")
+                if(dang_o_load_job(self.driver)):
+                    self.scroll_down()
+                elif(dang_o_chi_tiet_job(self.driver)):
+                    self.hoan_thanh()
+                else:
+                    return self.lay_thong_tin_job()
+
         try:
             # stale element reference: element is not attached to the page document
             ten_job = self.driver.find_elements(By.TAG_NAME, 'span')[5].text
         except:
             self.driver.get('https://app.golike.net/')
-            return self.lay_jobs()
+            return self.lay_thong_tin_job()
         print(ten_job, datetime.now().hour, "giờ", datetime.now().minute,
               "phút", datetime.now().second, "giây")
+        # chưa xác định được nguyên nhân tại sao đôi lúc ở đoạn này lại có 2 tab
+        # ***
         try:
             if(ten_job == "TĂNG LƯỢT THEO DÕI"):
                 self.huy_job()
-                return self.lay_jobs()
+                return self.lay_thong_tin_job()
         except:
             pass
         comment = None
         if(ten_job.find("TĂNG COMMENT") != -1):
-            try:
-                self.driver.execute_script(
-                    "document.getElementsByTagName('u')[0].click()")  # nhan copy
-                self.driver.execute_script(
-                    "document.getElementsByTagName('u')[0].click()")  # nhan copy
-            except:
-                print("--> CÓ LỖI ẤN COPY NỘI DUNG COMMENT")
-            comment = self.driver.find_elements(By.TAG_NAME, "span")[7].text
+            self.huy_job()
+            return self.lay_thong_tin_job()
+            # nick chưa đủ trâu để làm job kiểu này 
+            # try:
+            #     self.driver.execute_script(
+            #         "document.getElementsByTagName('u')[0].click()")  # nhan copy
+            #     self.driver.execute_script(
+            #         "document.getElementsByTagName('u')[0].click()")  # nhan copy
+            # except:
+            #     print("--> CÓ LỖI ẤN COPY NỘI DUNG COMMENT")
+            # comment = self.driver.find_elements(By.TAG_NAME, "span")[7].text
+            # print(">>> NỘI DUNG COMMENT: ", comment)
+
         # đột nhiên job đủ số lượng, golike đẩy mk về điểm xuất phát.
         try:
-            link = self.driver.execute_script("return document.getElementsByTagName('h6')[2]").find_element(By.XPATH,
-                                                                                                            '..').find_element(By.XPATH, '..').get_attribute('href')
+            link = self.get_link_job()
         except:
-            self.close_tab_2()
-            self.driver.get('https://app.golike.net/')
-            return self.lay_jobs()
-        try:
-            # Từng sảy ra lỗi do mất kết nối mạng ko mở dc job
-            self.su_ly_nut_lam_viec()
-        except:
-            self.close_tab_2()
-            self.doi_ip()
-            self.driver.get('https://app.golike.net/')
-            return self.lay_jobs()
-        print(link)
-        return self.present_id, ten_job, link, comment
+            return self.lay_thong_tin_job()
+        self.so_lan_load_ma_khong_co_job = 0
+        return self.id_account_is_doing_in_golike, ten_job, link, comment
 
-    def close_tab_2(self):
-        for window in self.driver.window_handles:
-            if(window != self.golike_tab):
-                self.driver.switch_to.window(window)
-                self.driver.close()
-        self.driver.switch_to.window(self.golike_tab)
-        if(len(self.driver.window_handles) > 1):
-            self.close_tab_2()
+    def nhan_lam_viec(self):
+        # Từng sảy ra lỗi do mất kết nối mạng ko mở dc job
+        self.su_ly_nut_lam_viec()
+
+    def get_link_job(self):
+        mbasic1 = self.driver.find_elements(By.TAG_NAME, "h6")
+        dem = 0
+        for mb1 in mbasic1:
+            if(mb1.text.lower() == "facebook"):
+                return self.driver.execute_script(
+                    "return document.getElementsByTagName('h6')["+str(dem)+"]").find_element(By.XPATH, '..').find_element(By.XPATH, '..').get_attribute('href')
+            dem += 1
+        return None
+
+    def vo_hieu_hoa_link(self):
+        mbasic1 = self.driver.find_elements(By.TAG_NAME, "h6")
+        dem = 0
+        for mb1 in mbasic1:
+            if(mb1.text.lower() == "facebook"):
+                try:
+                    self.driver.execute_script(
+                        "document.getElementsByTagName('h6')["+str(dem)+"].parentElement.parentElement.href = 'file:///storage/emulated/0/Downloads/index.html';")
+                except Exception as e:
+                    print("*Lỗi link", e)
+                print(">> Đã vô hiệu hóa link!")
+                self.driver.find_element(
+                    By.CSS_SELECTOR, "a.row.align-items-center").click()
+                print(">> Đã nhấn link!")
+                return
+            dem += 1
 
     def su_ly_nut_lam_viec(self):
-        # trang web tự dưng bị ngắt, tab thứ 2 vẫn còn
-        self.close_tab_2()
         # Vô hiệu hóa đường link
-        self.driver.execute_script(
-            "document.getElementsByTagName('h6')[2].parentElement.parentElement.href = 'javascript:void(0)';document.getElementsByTagName('h6')[2].click();")
-
-        # sẽ có 1 đường link 'vớ vẩn' hiện lên và ta cần đóng nó lại
-        self.close_tab_2()
-        return
+        try:
+            self.vo_hieu_hoa_link()
+        except Exception as e:
+            print("Lỗi vô hiện hóa đường link", e)
 
     def huy_job(self):
         # đang không ở trang chi tiết job
@@ -306,11 +360,10 @@ class Client:
                         "document.getElementsByTagName('h6')["+str(dem)+"].click()")
                     break
                 dem += 1
-        # Tôi không muốn làm Job này
             time.sleep(3)
             dem = 0
             for mb1 in tocao:
-                if(mb1.text == "Tôi không muốn làm Job này"):
+                if(mb1.text == "Tôi đã làm Job này rồi"):
                     self.driver.execute_script(
                         "document.getElementsByTagName('h6')["+str(dem)+"].click()")
                     break
@@ -318,6 +371,7 @@ class Client:
         # nhấn gửi
             self.driver.execute_script(
                 "document.getElementsByClassName('btn btn-primary btn-sm form-control mt-3')[0].click()")
+            doi_load(self.driver)
         except:
             print("Khong nhan to cao duoc")
     # An unknown server-side error occurred while processing the command. Original error: disconnected: received Inspector.detached event
@@ -326,17 +380,21 @@ class Client:
     # [HTTP]
 
     def hoan_thanh(self):
+        # có thể bị đẩy ra gây lỗi
         doi_load(self.driver)
-        mbasic1 = self.driver.find_elements(By.TAG_NAME, "h6")
-        dem = 0
-        for mb1 in mbasic1:
-            if(mb1.text.lower() == "hoàn thành"):
-                self.driver.execute_script(
-                    "document.getElementsByTagName('h6')["+str(dem)+"].click()")
-                return True
-            dem += 1
-        return False
-
+        try:
+            mbasic1 = self.driver.find_elements(By.TAG_NAME, "h6")
+            dem = 0
+            for mb1 in mbasic1:
+                if(mb1.text.lower() == "hoàn thành"):
+                    self.driver.execute_script(
+                        "document.getElementsByTagName('h6')["+str(dem)+"].click()")
+                    doi_load(self.driver)
+                    return True
+                dem += 1
+            return False
+        except Exception as e:
+            print("Lỗi hoàn thành", e)
     # cần biết:
     # - có captcha không - solved
     # - có giải được captcha không
@@ -352,7 +410,7 @@ class Client:
     def xet_cap_cha(self):
         # đang ở phần chi tiết job thì có khả năng là có captcha
         if(dang_o_chi_tiet_job(self.driver) or dang_o_load_job(self.driver)):
-            self.xac_dinh_captcha_dang_hien_thi()
+            self.captcha_co_dang_hien_thi_khong()
         else:
             print("Khong co captcha")
 
@@ -367,6 +425,12 @@ class Client:
             return
 
         print(thong_bao)
+        for i in ('phân phối', 'đảm bảo công bằng'):
+            if(thong_bao.find(i) != -1):
+                print('* ĐỢi 30s nhé.')
+                time.sleep(30)
+                break
+            
         fb_bi_khoa = False
         can_huy_job = False
         can_load_lai = False
@@ -417,8 +481,9 @@ class Client:
         nhan_ok(self.driver)
         if(chi_nhan_ok):
             self.so_jobs_can_lam -= 1
+            # Đã làm đủ số jobs cần lầm
             if(self.so_jobs_can_lam == 0):
-                self.tang_so_account_da_lam()
+                self.id_will_give_to_server_facebook = lay_id_account()
                 self.doi_taikhoan_lamviec()
                 self.so_jobs_can_lam = SO_JOB_MOI_NICK
             return
@@ -433,10 +498,9 @@ class Client:
             return
         if(can_lam_tiep):
             self.so_lan_thu_hoan_thanh_lai += 1
-            try:
-                self.su_ly_nut_lam_viec()
-            except:
-                pass
+
+            self.su_ly_nut_lam_viec()
+
             self.hoan_thanh()
             return True
         if(can_huy_job):
@@ -445,10 +509,11 @@ class Client:
         if(can_chuyen_nick):
             print(
                 "=============================Bạn đã làm quá 100 jobs ============================")
-            self.tang_so_account_da_lam()
+            set_id_account_du_100_jobs(self.id_account_is_doing_in_golike)
+            self.id_will_give_to_server_facebook = lay_id_account()
             self.doi_taikhoan_lamviec()
 
-    def xac_dinh_captcha_dang_hien_thi(self):
+    def captcha_co_dang_hien_thi_khong(self):
         self.driver.switch_to.default_content()
         frames = self.driver.find_elements(By.TAG_NAME, "iframe")
         for i in range(0, len(frames)):
@@ -462,13 +527,13 @@ class Client:
                     print(">>>>>>>>CÓ CAPTCHA!!!")
                     self.doi_ip()
                     self.driver.get('https://app.golike.net/')
+                    return True
                     break
             except:
                 # print("mã lỗi 137")
                 pass
-
         self.driver.switch_to.default_content()
-
+        return False
 
 # ========================================================================================================================================================================================================================================
 
@@ -514,6 +579,7 @@ def get_status_request(fb_id, loai_job, link_fb) -> int:
 
 
 def create_post_job(fb_id, loai_job, link_fb, noi_dung_comment):
+    print(">>> POST: ", fb_id, loai_job, link_fb, noi_dung_comment)
     with conn:
         cursor = conn.cursor()
         if(noi_dung_comment):
@@ -549,15 +615,16 @@ def run_app(so_thu_tu_mobile):
     # server = Server_facebook()
     # bắt các Exception có thể biết được nếu như mobile bị die
     while(1):
-        # client lấy job về
-        info_job = client.lay_jobs()
-        # server thực hiện
+        # client lấy thông tin job về
+        info_job = client.lay_thong_tin_job()
         # KIỂM TRA GIÁ TRỊ None TRƯỚC KHI GỬI LÊN DATABASE
         if(not(info_job[0] and info_job[1] and info_job[2])):
             continue
         # gửi job lên database
         post_job(info_job[0], info_job[1], info_job[2], info_job[3])
-        time.sleep(0.6)
+        # Nhấn làm việc
+        client.nhan_lam_viec()
+        time.sleep(3)
         # lấy kêts quả phản hồi của server từ database
         status_of_current_job = get_status_request(
             info_job[0], info_job[1], info_job[2])
@@ -580,6 +647,6 @@ def run_app(so_thu_tu_mobile):
 
 
 if __name__ == '__main__':
-    
+
     # Pool(2).map(run_app, (0, 1))
     run_app(int(sys.argv[1]))

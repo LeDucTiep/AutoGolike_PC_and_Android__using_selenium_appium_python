@@ -20,4 +20,4 @@ def post_job(fb_id, loai_job, link_fb, noi_dung_comment = None):
     x.start()
     x.join()
 
-post_job('100076681864851',	'TĂNG LIKE CHO BÀI VIẾT',	'https://www.facebook.com/325375386360597')
+post_job('100076379839853', 'TĂNG HAHA CHO BÀI VIẾT', 'https://www.facebook.com/702885711124789')
