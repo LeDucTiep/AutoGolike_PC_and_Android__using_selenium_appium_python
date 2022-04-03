@@ -498,7 +498,7 @@ class Client:
             return
         if(can_lam_tiep):
             self.so_lan_thu_hoan_thanh_lai += 1
-
+            time.sleep(3)
             self.su_ly_nut_lam_viec()
 
             self.hoan_thanh()
