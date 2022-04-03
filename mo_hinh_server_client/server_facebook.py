@@ -11,7 +11,7 @@ import pyodbc
 import sys
 
 SO_DRIVER_MO_CUNG_LUC = 2
-LINK_CHROMEDRIVER_99 = "D:\\ChromeDriver\\chromedriver.exe"
+LINK_CHROMEDRIVER_99 = r"D:\ChromeDriver\chrome_ver99\chromedriver.exe"
 LINK_FOLDER_CHROMEPROFILE = "D:\\AutoGolike_PC_and_Android\\browser_profiles\\"
 
 input_form_system = sys.argv
