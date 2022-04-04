@@ -364,20 +364,20 @@ class Server_facebook:
                 driver_list[id_nuoi].get(
                     r'https://mbasic.facebook.com/friends/center/mbasic/?fb_ref=tn&sr=1&ref_component=mbasic_home_header&ref_page=MChatBuddyListController')  # bạn bè
                 time.sleep(random.randint(1, 2))
-                try:
-                    if(self.dang_nuoi[id_nuoi] == False):
-                        return
-                    driver_list[id_nuoi].find_elements_by_link_text("Xác nhận")[random.randint(
-                        0, len(driver_list[id_nuoi].find_elements_by_link_text("Xác nhận"))-1)].click()
-                    time.sleep(random.randint(1, 2))
-                    if(w > 50):
-                        if(self.dang_nuoi[id_nuoi] == False):
-                            return
-                        driver_list[id_nuoi].find_elements_by_link_text("Thêm bạn bè")[random.randint(
-                            0, len(driver_list[id_nuoi].find_elements_by_link_text("Thêm bạn bè"))-1)].click()
-                except:
-                    print(
-                        "khong xac nhan duoc ket ban ---------------------------------------------------------------------------------")
+                # try:
+                #     if(self.dang_nuoi[id_nuoi] == False):
+                #         return
+                #     driver_list[id_nuoi].find_elements_by_link_text("Xác nhận")[random.randint(
+                #         0, len(driver_list[id_nuoi].find_elements_by_link_text("Xác nhận"))-1)].click()
+                #     time.sleep(random.randint(1, 2))
+                #     if(w > 50):
+                #         if(self.dang_nuoi[id_nuoi] == False):
+                #             return
+                #         driver_list[id_nuoi].find_elements_by_link_text("Thêm bạn bè")[random.randint(
+                #             0, len(driver_list[id_nuoi].find_elements_by_link_text("Thêm bạn bè"))-1)].click()
+                # except:
+                #     print(
+                #         "khong xac nhan duoc ket ban ---------------------------------------------------------------------------------")
                 self.dang_nuoi[id_nuoi] = False
                 return
 

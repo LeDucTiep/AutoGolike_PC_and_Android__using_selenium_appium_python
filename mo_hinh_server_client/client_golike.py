@@ -14,10 +14,12 @@ DELAY_FOR_EACH_ELEMENT = 5
 TOI_DA_SO_LUONG_JOB_KHONG_LOAD_DUOC_THI_CO_KHA_NANG_LOI = 10
 LINK_CHROMEDRIVER_98 = r"D:\ChromeDriver\chrome_ver98\chromedriver.exe"
 LINK_CHROMEDRIVER_100 = r"D:\ChromeDriver\chrome_ver100\chromedriver.exe"
+LINK_CHROMEDRIVER_101 = r"D:\ChromeDriver\chrome_ver101\chromedriver.exe"
 
 ten_dang_nhap = "tieple247"
 mat_khau = "lananhvu2701"
-id_device = ('AMD00232309', 'X9C1932014491')
+
+id_device = ('AMD00232309', 'X9C1932014491', 'SKW4NNN7LJDQAYZS')
 
 conn = pyodbc.connect('Driver={SQL Server};'
                       'Server=DESKTOP-00A9GG2\LEDUCTIEP;'
@@ -125,7 +127,17 @@ class Client:
             'appium:chromedriverExecutable': LINK_CHROMEDRIVER_98,
             'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
             'newCommandTimeout': '86400'
+        }, {
+            'platformName': 'Android',
+            'platformVersion': '11',
+            'browserName': 'chrome',
+            "noReset": "True",
+            # 'appium:chromedriverExecutable': LINK_CHROMEDRIVER_100,
+            'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
+            'newCommandTimeout': '86400'
         }
+        # appium --allow-insecure chromedriver_autodownload
+
         self.id_will_give_to_server_facebook = lay_id_account()
         self.driver = self.connect_mobile()
         self.login(ten_dang_nhap, mat_khau)
@@ -168,6 +180,7 @@ class Client:
             self.driver.find_element(By.TAG_NAME, "button").click()
             time.sleep(3)
             if(self.captcha_co_dang_hien_thi_khong()):
+                # self.doi_ip()
                 self.login(userName, passWord)
                 return
             self.driver.find_element(
@@ -204,7 +217,7 @@ class Client:
     def lay_thong_tin_job(self):
         # Ta cần trắc trắn không có thông báo nào hiện lên
         self.xet_cap_cha()
-       
+
         if((not dang_o_load_job(self.driver)) and (not dang_o_chi_tiet_job(self.driver))):
             # Vào phần chọn kênh kiếm tiền: - lệnh này có lỗi khi đang ở Chi tiết và web tự chuyển hướng sang trang load job
             try:
@@ -240,10 +253,14 @@ class Client:
                         # click có thể lỗi nếu có thông báo hiển thị
                         job[0].click()
                         print("-->ĐÃ TÌM THẤY JOB")
-
                         break
                 elif(dang_o_chi_tiet_job(self.driver)):
                     self.hoan_thanh()
+                    self.so_lan_load_ma_khong_co_job += 1
+                    if(self.so_lan_load_ma_khong_co_job == TOI_DA_SO_LUONG_JOB_KHONG_LOAD_DUOC_THI_CO_KHA_NANG_LOI):
+                        self.so_lan_load_ma_khong_co_job = 0
+                    self.driver.get('https://app.golike.net/')
+                    return self.lay_thong_tin_job()
                 else:
                     return self.lay_thong_tin_job()
             except:
@@ -264,7 +281,7 @@ class Client:
                 if(dang_o_load_job(self.driver)):
                     self.scroll_down()
                 elif(dang_o_chi_tiet_job(self.driver)):
-                    self.hoan_thanh()
+                    self.xet_cap_cha()
                 else:
                     return self.lay_thong_tin_job()
 
@@ -528,7 +545,6 @@ class Client:
                     self.doi_ip()
                     self.driver.get('https://app.golike.net/')
                     return True
-                    break
             except:
                 # print("mã lỗi 137")
                 pass
@@ -650,3 +666,4 @@ if __name__ == '__main__':
 
     # Pool(2).map(run_app, (0, 1))
     run_app(int(sys.argv[1]))
+    # run_app()
