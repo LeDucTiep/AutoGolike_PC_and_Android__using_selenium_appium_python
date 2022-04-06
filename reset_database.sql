@@ -22,10 +22,22 @@ CREATE TABLE BANGJOBS
 	status TINYINT
 );
 
+CREATE TABLE taikhoan
+(
+	dang_lam INT DEFAULT (0),
+	id_fb CHAR(15) PRIMARY KEY,
+	ngay_lam_xong DATE DEFAULT '03-30-2022'
+)
+
+create table TaiKhoanMatKhau (
+	taikhoan VARCHAR(50),
+	matkhau nvarchar(50)
+)
 
 
-SELECT *
-FROM BANGJOBS
+
+-- SELECT *
+-- FROM BANGJOBS
 
 -- CREATE TABLE SoAccountDaLam
 -- (
@@ -45,17 +57,12 @@ FROM BANGJOBS
 
 -- UPDATE BANGJOBS SET status=1 WHERE fb_id = '100076681864851' AND loai_job = N'TĂNG LIKE CHO BÀI VIẾT' AND link_fb = 'https://www.facebook.com/325375386360597'
 
-DELETE FROM BANGJOBS
+-- DELETE FROM BANGJOBS
 
 
--- tạo bảng tài khoản 
-DROP TABLE taikhoan
-CREATE TABLE taikhoan
-(
-	dang_lam INT DEFAULT (0),
-	id_fb CHAR(15) PRIMARY KEY,
-	ngay_lam_xong DATE DEFAULT '03-30-2022'
-)
+-- -- tạo bảng tài khoản 
+-- DROP TABLE taikhoan
+
 delete from taikhoan
 INSERT INTO taikhoan
 	(id_fb)
@@ -72,28 +79,30 @@ VALUES
 	('100012962526153')
 
 UPDATE taikhoan set dang_lam = 0
+
 SELECT *
 FROM taikhoan  where day(getdate()) != day(ngay_lam_xong)
 
 
-delete taikhoan where id_fb = '100076379839853'
-SELECT top(1)
-	id_fb
-FROM taikhoan
-WHERE dang_lam = (SELECT min(dang_lam)
-	FROM taikhoan where day(getdate()) != day(ngay_lam_xong))
-and day(getdate()) != day(ngay_lam_xong)
+-- delete taikhoan where id_fb = '100076379839853'
+-- SELECT top(1)
+-- 	id_fb
+-- FROM taikhoan
+-- WHERE dang_lam = (SELECT min(dang_lam)
+-- 	FROM taikhoan where day(getdate()) != day(ngay_lam_xong))
+-- and day(getdate()) != day(ngay_lam_xong)
 
-UPDATE taikhoan 
-SET dang_lam += 1
-WHERE id_fb = "+id+"
-
-
-UPDATE taikhoan 
-SET ngay_lam_xong = GETDATE()
-where id_fb = 
+-- UPDATE taikhoan 
+-- SET dang_lam += 1
+-- WHERE id_fb = "+id+"
 
 
+
+
+-- -- Tạo bảng lưu tài khoản golike 
+
+
+-- insert into TaiKhoanMatKhau VALUEs ('', '')
 
 
 

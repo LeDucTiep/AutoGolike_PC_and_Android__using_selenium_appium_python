@@ -119,7 +119,7 @@ class Client:
             'browserName': 'chrome',
             'appium:chromedriverExecutable': LINK_CHROMEDRIVER_100,
             'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
-            'newCommandTimeout': '86400'
+            'newCommandTimeout': '86400',
         }, {
             'platformName': 'Android',
             'platformVersion': '9',
@@ -131,7 +131,8 @@ class Client:
             'platformName': 'Android',
             'platformVersion': '11',
             'browserName': 'chrome',
-            "noReset": "True",
+            # "noReset": 'true',
+            # 'fullReset': True,
             # 'appium:chromedriverExecutable': LINK_CHROMEDRIVER_100,
             'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
             'newCommandTimeout': '86400'
@@ -167,6 +168,8 @@ class Client:
             'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc data enable')
 
     def login(self, userName, passWord):
+        # secs = 10
+        # self.driver.background_app({"seconds": secs})
         if (self.driver != None):
             self.driver.get("https://app.golike.net/")
             # input("-->KHÓA ỨNG DỤNG LẠI, RỒI NHẤN ENTER!")
@@ -179,10 +182,11 @@ class Client:
             time.sleep(1.5)
             self.driver.find_element(By.TAG_NAME, "button").click()
             time.sleep(3)
-            if(self.captcha_co_dang_hien_thi_khong()):
-                # self.doi_ip()
-                self.login(userName, passWord)
-                return
+            # if(self.captcha_co_dang_hien_thi_khong()):
+            #     self.doi_ip()
+            #     self.login(userName, passWord)
+            #     return
+            input()
             self.driver.find_element(
                 By.XPATH, "//*[@id=\"cheatModal\"]/div/div/div/div/div/button").click()
             print("Login successful!")
