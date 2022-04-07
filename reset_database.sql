@@ -34,6 +34,7 @@ create table TaiKhoanMatKhau (
 	matkhau nvarchar(50)
 )
 
+select top(1) taikhoan, matkhau from TaiKhoanMatKhau
 
 
 -- SELECT *

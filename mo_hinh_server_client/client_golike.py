@@ -16,8 +16,7 @@ LINK_CHROMEDRIVER_98 = r"D:\ChromeDriver\chrome_ver98\chromedriver.exe"
 LINK_CHROMEDRIVER_100 = r"D:\ChromeDriver\chrome_ver100\chromedriver.exe"
 LINK_CHROMEDRIVER_101 = r"D:\ChromeDriver\chrome_ver101\chromedriver.exe"
 
-ten_dang_nhap = "tieple247"
-mat_khau = "lananhvu2701"
+
 
 id_device = ('AMD00232309', 'X9C1932014491', 'SKW4NNN7LJDQAYZS')
 
@@ -63,6 +62,17 @@ def set_id_account_du_100_jobs(id):
                             SET ngay_lam_xong = GETDATE()
                             where id_fb = '''+str(id)
                        )
+
+def lay_taikhoan_matkhau():
+    with conn:
+        cursor = conn.cursor()
+        cursor.execute('''  
+                            select top(1) taikhoan, matkhau from TaiKhoanMatKhau
+                        ''')
+        for i in cursor:
+            return i
+
+ten_dang_nhap, mat_khau = lay_taikhoan_matkhau()
 
 
 def sleep13():
