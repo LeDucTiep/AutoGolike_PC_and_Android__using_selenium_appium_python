@@ -9,5 +9,5 @@ conn = pyodbc.connect('Driver={SQL Server};'
 with conn:
     cursor = conn.cursor()
     cursor.execute('''  
-                        UPDATE taikhoan set dang_lam = 0
+                        UPDATE taikhoan set dang_lam = 0, ngay_lam_xong = '03-30-2022'
                     ''')
