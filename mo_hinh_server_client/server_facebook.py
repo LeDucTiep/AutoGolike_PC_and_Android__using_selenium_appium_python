@@ -11,7 +11,7 @@ import pyodbc
 import sys
 
 SO_DRIVER_MO_CUNG_LUC = 2
-LINK_CHROMEDRIVER_99 = r"D:\ChromeDriver\chrome_ver99\chromedriver.exe"
+LINK_CHROMEDRIVER = r"D:\ChromeDriver\chrome_ver101\chromedriver.exe"
 LINK_FOLDER_CHROMEPROFILE = "D:\\AutoGolike_PC_and_Android\\browser_profiles\\"
 
 input_form_system = sys.argv
@@ -99,7 +99,7 @@ class Server_facebook:
         }
         options.add_experimental_option("prefs", prefs)
         driver_list[self.current_fb] = selenium_webdriver.Chrome(service=Service(
-            LINK_CHROMEDRIVER_99), options=options)
+            LINK_CHROMEDRIVER), options=options)
 
     def like_share_comment_follow(self):
         # có đôi lúc tự động mở thêm 1 cửa sổ quảng cáo mà ko biết lý do

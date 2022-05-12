@@ -37,9 +37,10 @@ create table TaiKhoanMatKhau (
 select top(1) taikhoan, matkhau from TaiKhoanMatKhau
 
 
--- SELECT *
--- FROM BANGJOBS
+SELECT *
+FROM BANGJOBS
 
+delete BANGJOBS
 -- CREATE TABLE SoAccountDaLam
 -- (
 -- 	soacc TINYINT
@@ -68,19 +69,21 @@ delete from taikhoan
 INSERT INTO taikhoan
 	(id_fb)
 VALUES
+	('100079620296549'),
 	('100080122143986'),
 	('100079883326930'),
 	('100076681864851'),
 	('100076630237844'),
-	('100076621927821'),
-	('100076609088552'),
-	('100076487174292'),
 	('100076469834611'),
 	('100076469265711'),
-	('100012962526153')
+	('100012962526153'),
+	('100080136848357'),
+	('100079849220022'),
+	('100080296230155')
 
-UPDATE taikhoan set dang_lam = 0
+UPDATE taikhoan set dang_lam = 0, ngay_lam_xong = '03-30-2022'
 
+use jobsgolike
 SELECT *
 FROM taikhoan  where day(getdate()) != day(ngay_lam_xong)
 

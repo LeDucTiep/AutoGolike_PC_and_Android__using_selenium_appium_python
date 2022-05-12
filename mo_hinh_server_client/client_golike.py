@@ -6,16 +6,16 @@ from datetime import datetime
 from appium import webdriver as appium_webdriver
 from selenium.webdriver.common.by import By
 from threading import Thread
-from multiprocessing import Pool
+# from multiprocessing import Pool
 import sys
 
-SO_JOB_MOI_NICK = 10
+SO_JOB_MOI_NICK = 5
 DELAY_FOR_EACH_ELEMENT = 5
 TOI_DA_SO_LUONG_JOB_KHONG_LOAD_DUOC_THI_CO_KHA_NANG_LOI = 10
 LINK_CHROMEDRIVER_98 = r"D:\ChromeDriver\chrome_ver98\chromedriver.exe"
 LINK_CHROMEDRIVER_100 = r"D:\ChromeDriver\chrome_ver100\chromedriver.exe"
 LINK_CHROMEDRIVER_101 = r"D:\ChromeDriver\chrome_ver101\chromedriver.exe"
-
+bo_qua_jobs_theo_doi = True
 
 
 id_device = ('AMD00232309', 'X9C1932014491', 'SKW4NNN7LJDQAYZS')
@@ -113,6 +113,7 @@ def nhan_ok(driver):
 
 class Client:
     driver = None
+    golike_tab = None
     id_account_is_doing_in_golike = None
     id_will_give_to_server_facebook = None
     so_jobs_can_lam = SO_JOB_MOI_NICK
@@ -134,7 +135,7 @@ class Client:
             'platformName': 'Android',
             'platformVersion': '9',
             'browserName': 'chrome',
-            'appium:chromedriverExecutable': LINK_CHROMEDRIVER_98,
+            # 'appium:chromedriverExecutable': LINK_CHROMEDRIVER_98,
             'udid': id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY],
             'newCommandTimeout': '86400'
         }, {
@@ -152,6 +153,7 @@ class Client:
         self.id_will_give_to_server_facebook = lay_id_account()
         self.driver = self.connect_mobile()
         self.login(ten_dang_nhap, mat_khau)
+        self.stack_can_chuyen_nick = 0
 
     def connect_mobile(self) -> appium_webdriver:
         capabilities = self.THONG_TIN_THIET_BI[self.SO_THU_TU_THIET_BI_CAN_CHAY]
@@ -163,19 +165,34 @@ class Client:
     def scroll_down(self):
         subprocess.call(
             'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 200 900 200 300')
+        subprocess.call(
+            'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 200 900 200 300')
+        
 
     def doi_ip(self):
         print("-------------------------------DANG DOI IP MANG---------------------------------------------------")
         subprocess.call(
             'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc wifi disable')
-        subprocess.call(
-            'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc data disable')
-        time.sleep(0.2)
-        subprocess.call(
-            'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc data enable')
-        time.sleep(0.5)
-        subprocess.call(
-            'adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell svc data enable')
+        if(id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY] == 'X9C1932014491'):
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 0 500 1000')
+            time.sleep(0.01)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 0 500 1000')
+            time.sleep(0.01)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input tap 140 550')
+            time.sleep(1)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input tap 140 550')
+            time.sleep(0.01)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 1000 500 0')
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 1000 500 0')
+        else:
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 0 500 1000')
+            time.sleep(0.01)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input tap 606 266')
+            time.sleep(1)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input tap 606 266')
+            time.sleep(0.01)
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 1000 500 0')
+            subprocess.call('adb -s '+id_device[self.SO_THU_TU_THIET_BI_CAN_CHAY]+' shell input swipe 500 1000 500 0')
 
     def login(self, userName, passWord):
         # secs = 10
@@ -184,6 +201,7 @@ class Client:
             self.driver.get("https://app.golike.net/")
             # input("-->KHÓA ỨNG DỤNG LẠI, RỒI NHẤN ENTER!")
             print("The web is loaded!")
+            self.golike_tab = self.driver.window_handles[0]
             # lưu lại tab này, ta sẽ cần nó để phân biệt tab nào không nên tắt
             div = self.driver.find_elements(
                 By.CSS_SELECTOR, "input.form-control")
@@ -227,11 +245,18 @@ class Client:
         if (not dk):
             print(nick_dang_lam, self.id_account_is_doing_in_golike)
         return dk
-
+    def close_tab_2(self):
+        for window in self.driver.window_handles:
+            if(window != self.golike_tab):
+                self.driver.switch_to.window(window)
+                self.driver.close()
+        self.driver.switch_to.window(self.golike_tab)
+        if(len(self.driver.window_handles) > 1):
+            self.close_tab_2()
     def lay_thong_tin_job(self):
         # Ta cần trắc trắn không có thông báo nào hiện lên
         self.xet_cap_cha()
-
+        self.close_tab_2()
         if((not dang_o_load_job(self.driver)) and (not dang_o_chi_tiet_job(self.driver))):
             # Vào phần chọn kênh kiếm tiền: - lệnh này có lỗi khi đang ở Chi tiết và web tự chuyển hướng sang trang load job
             try:
@@ -265,8 +290,15 @@ class Client:
                         self.doi_taikhoan_lamviec()
                     if((job != None)):
                         # click có thể lỗi nếu có thông báo hiển thị
-                        job[0].click()
+                        dem = -1
+                        for i in job:
+                            dem += 1
+                            print(i.text)
+                            if(i.text.find('LIKE') != -1):
+                                break
+                        job[dem].click()
                         print("-->ĐÃ TÌM THẤY JOB")
+                        self.stack_can_chuyen_nick = 0
                         break
                 elif(dang_o_chi_tiet_job(self.driver)):
                     self.hoan_thanh()
@@ -309,12 +341,13 @@ class Client:
               "phút", datetime.now().second, "giây")
         # chưa xác định được nguyên nhân tại sao đôi lúc ở đoạn này lại có 2 tab
         # ***
-        try:
-            if(ten_job == "TĂNG LƯỢT THEO DÕI"):
-                self.huy_job()
-                return self.lay_thong_tin_job()
-        except:
-            pass
+        if(bo_qua_jobs_theo_doi):
+            try:
+                if(ten_job == "TĂNG LƯỢT THEO DÕI"):
+                    self.huy_job()
+                    return self.lay_thong_tin_job()
+            except:
+                pass
         comment = None
         if(ten_job.find("TĂNG COMMENT") != -1):
             self.huy_job()
@@ -380,6 +413,7 @@ class Client:
         # đang không ở trang chi tiết job
         if(not dang_o_chi_tiet_job(self.driver)):
             return
+        self.scroll_down()
         print("đang tố cáo")
         try:
             # nhấn báo lỗi
@@ -391,7 +425,7 @@ class Client:
                         "document.getElementsByTagName('h6')["+str(dem)+"].click()")
                     break
                 dem += 1
-            time.sleep(3)
+            time.sleep(1)
             dem = 0
             for mb1 in tocao:
                 if(mb1.text == "Tôi đã làm Job này rồi"):
@@ -529,7 +563,7 @@ class Client:
             return
         if(can_lam_tiep):
             self.so_lan_thu_hoan_thanh_lai += 1
-            time.sleep(3)
+            time.sleep(1)
             self.su_ly_nut_lam_viec()
 
             self.hoan_thanh()
@@ -538,12 +572,17 @@ class Client:
             self.huy_job()
             return True
         if(can_chuyen_nick):
-            print(
-                "=============================Bạn đã làm quá 100 jobs ============================")
-            set_id_account_du_100_jobs(self.id_account_is_doing_in_golike)
-            self.id_will_give_to_server_facebook = lay_id_account()
-            self.doi_taikhoan_lamviec()
-
+            self.stack_can_chuyen_nick += 1
+            if(self.stack_can_chuyen_nick == 2):
+                self.stack_can_chuyen_nick = 0
+                print(
+                    "=============================Bạn đã làm quá 100 jobs ============================")
+                set_id_account_du_100_jobs(self.id_account_is_doing_in_golike)
+                self.id_will_give_to_server_facebook = lay_id_account()
+                self.doi_taikhoan_lamviec()
+            else: 
+                self.doi_ip()
+                self.driver.get('https://app.golike.net/')
     def captcha_co_dang_hien_thi_khong(self):
         self.driver.switch_to.default_content()
         frames = self.driver.find_elements(By.TAG_NAME, "iframe")
@@ -654,7 +693,7 @@ def run_app(so_thu_tu_mobile):
         post_job(info_job[0], info_job[1], info_job[2], info_job[3])
         # Nhấn làm việc
         client.nhan_lam_viec()
-        time.sleep(3)
+        time.sleep(2)
         # lấy kêts quả phản hồi của server từ database
         status_of_current_job = get_status_request(
             info_job[0], info_job[1], info_job[2])
